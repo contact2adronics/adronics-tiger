@@ -1078,19 +1078,19 @@ __DELAY_USW_LOOP:
 	JMP  0x00
 	JMP  0x00
 
-_tbl10_G103:
+_tbl10_G101:
 	.DB  0x10,0x27,0xE8,0x3,0x64,0x0,0xA,0x0
 	.DB  0x1,0x0
-_tbl16_G103:
+_tbl16_G101:
 	.DB  0x0,0x10,0x0,0x1,0x10,0x0,0x1,0x0
 
-_0x2040003:
+_0x2000003:
 	.DB  0x80,0xC0
 
 __GLOBAL_INI_TBL:
 	.DW  0x02
-	.DW  __base_y_G102
-	.DW  _0x2040003*2
+	.DW  __base_y_G100
+	.DW  _0x2000003*2
 
 _0xFFFFFFFF:
 	.DW  0
@@ -1208,387 +1208,525 @@ __GLOBAL_INI_END:
 	.EQU __sm_adc_noise_red=0x10
 	.SET power_ctrl_reg=mcucr
 	#endif
-;
 ;#include <delay.h>
-;
-;// I2C Bus functions
-;#asm
-   .equ __i2c_port=0x15 ;PORTC
-   .equ __sda_bit=1
-   .equ __scl_bit=0
-; 0000 0022 #endasm
 ;#include <i2c.h>
-;
-;// DS1621 Thermometer/Thermostat functions
-;#include <ds1621.h>
-;
-;// DS1307 Real Time Clock functions
-;#include <ds1307.h>
-;
-;// Alphanumeric LCD Module functions
-;#asm
-   .equ __lcd_port=0x1B ;PORTA
-; 0000 002E #endasm
 ;#include <lcd.h>
+;#include <ds_1307.h>
+;#include <buzzer.h>
+;#include <rc5.h>
 ;
 ;// Standard Input/Output functions
 ;#include <stdio.h>
+;#include "TiGERv10.h"
+                .equ __i2c_port=0x15 ;PORTC
+                .equ __sda_bit=1
+                .equ __scl_bit=0
+                .equ __lcd_port=0x1B ;PORTA
 ;
-;#define ADC_VREF_TYPE 0x00
-;
-;// Read the AD conversion result
-;unsigned int read_adc(unsigned char adc_input)
-; 0000 0038 {
-
-	.CSEG
-; 0000 0039 ADMUX=adc_input | (ADC_VREF_TYPE & 0xff);
-;	adc_input -> Y+0
-; 0000 003A // Delay needed for the stabilization of the ADC input voltage
-; 0000 003B delay_us(10);
-; 0000 003C // Start the AD conversion
-; 0000 003D ADCSRA|=0x40;
-; 0000 003E // Wait for the AD conversion to complete
-; 0000 003F while ((ADCSRA & 0x10)==0);
-; 0000 0040 ADCSRA|=0x10;
-; 0000 0041 return ADCW;
-; 0000 0042 }
+;#include <adc.h>
 ;
 ;// Declare your global variables here
 ;
 ;void main(void)
-; 0000 0047 {
+; 0000 002A {
+
+	.CSEG
 _main:
-; 0000 0048 // Declare your local variables here
-; 0000 0049 
-; 0000 004A // Input/Output Ports initialization
-; 0000 004B // Port A initialization
-; 0000 004C // Func7=Out Func6=Out Func5=Out Func4=Out Func3=In Func2=Out Func1=Out Func0=Out
-; 0000 004D // State7=0 State6=0 State5=0 State4=0 State3=T State2=0 State1=0 State0=0
-; 0000 004E PORTA=0x00;
+; 0000 002B         // Declare your local variables here
+; 0000 002C         // Input/Output Ports initialization
+; 0000 002D         // Port A initialization
+; 0000 002E         // Func7=Out Func6=Out Func5=Out Func4=Out Func3=In Func2=Out Func1=Out Func0=Out
+; 0000 002F         // State7=0 State6=0 State5=0 State4=0 State3=T State2=0 State1=0 State0=0
+; 0000 0030         PORTA=0x00;
 	LDI  R30,LOW(0)
 	OUT  0x1B,R30
-; 0000 004F DDRA=0xF7;
+; 0000 0031         DDRA=0xF7;
 	LDI  R30,LOW(247)
 	OUT  0x1A,R30
-; 0000 0050 
-; 0000 0051 // Port B initialization
-; 0000 0052 // Func7=In Func6=In Func5=In Func4=In Func3=In Func2=In Func1=In Func0=In
-; 0000 0053 // State7=T State6=T State5=T State4=T State3=T State2=T State1=T State0=T
-; 0000 0054 PORTB=0x00;
+; 0000 0032 
+; 0000 0033         // Port B initialization
+; 0000 0034         // Func7=In Func6=In Func5=In Func4=In Func3=In Func2=In Func1=In Func0=In
+; 0000 0035         // State7=T State6=T State5=T State4=T State3=T State2=T State1=T State0=T
+; 0000 0036         PORTB=0x00;
 	LDI  R30,LOW(0)
 	OUT  0x18,R30
-; 0000 0055 DDRB=0x00;
+; 0000 0037         DDRB=0x00;
 	OUT  0x17,R30
-; 0000 0056 
-; 0000 0057 // Port C initialization
-; 0000 0058 // Func7=Out Func6=Out Func5=Out Func4=Out Func3=Out Func2=Out Func1=Out Func0=Out
-; 0000 0059 // State7=0 State6=0 State5=0 State4=0 State3=0 State2=0 State1=0 State0=0
-; 0000 005A PORTC=0x00;
+; 0000 0038 
+; 0000 0039         // Port C initialization
+; 0000 003A         // Func7=Out Func6=Out Func5=Out Func4=Out Func3=Out Func2=Out Func1=Out Func0=Out
+; 0000 003B         // State7=0 State6=0 State5=0 State4=0 State3=0 State2=0 State1=0 State0=0
+; 0000 003C         PORTC=0x00;
 	OUT  0x15,R30
-; 0000 005B DDRC=0xFF;
+; 0000 003D         DDRC=0xFF;
 	LDI  R30,LOW(255)
 	OUT  0x14,R30
-; 0000 005C 
-; 0000 005D // Port D initialization
-; 0000 005E // Func7=Out Func6=In Func5=In Func4=Out Func3=Out Func2=Out Func1=In Func0=In
-; 0000 005F // State7=1 State6=P State5=P State4=1 State3=1 State2=1 State1=T State0=T
-; 0000 0060 PORTD=0xFC;
+; 0000 003E 
+; 0000 003F         // Port D initialization
+; 0000 0040         // Func7=Out Func6=In Func5=In Func4=Out Func3=Out Func2=Out Func1=In Func0=In
+; 0000 0041         // State7=1 State6=P State5=P State4=1 State3=1 State2=1 State1=T State0=T
+; 0000 0042         PORTD=0xFC;
 	LDI  R30,LOW(252)
 	OUT  0x12,R30
-; 0000 0061 DDRD=0x9C;
+; 0000 0043         DDRD=0x9C;
 	LDI  R30,LOW(156)
 	OUT  0x11,R30
-; 0000 0062 
-; 0000 0063 // Timer/Counter 0 initialization
-; 0000 0064 // Clock source: System Clock
-; 0000 0065 // Clock value: 15.625 kHz
-; 0000 0066 // Mode: Normal top=FFh
-; 0000 0067 // OC0 output: Disconnected
-; 0000 0068 TCCR0=0x05;
+; 0000 0044 
+; 0000 0045         // Timer/Counter 0 initialization
+; 0000 0046         // Clock source: System Clock
+; 0000 0047         // Clock value: 15.625 kHz
+; 0000 0048         // Mode: Normal top=FFh
+; 0000 0049         // OC0 output: Disconnected
+; 0000 004A         TCCR0=0x05;
 	LDI  R30,LOW(5)
 	OUT  0x33,R30
-; 0000 0069 TCNT0=0x00;
+; 0000 004B         TCNT0=0x00;
 	LDI  R30,LOW(0)
 	OUT  0x32,R30
-; 0000 006A OCR0=0x00;
+; 0000 004C         OCR0=0x00;
 	OUT  0x3C,R30
-; 0000 006B 
-; 0000 006C // Timer/Counter 1 initialization
-; 0000 006D // Clock source: System Clock
-; 0000 006E // Clock value: Timer1 Stopped
-; 0000 006F // Mode: Normal top=FFFFh
-; 0000 0070 // OC1A output: Discon.
-; 0000 0071 // OC1B output: Discon.
-; 0000 0072 // Noise Canceler: Off
-; 0000 0073 // Input Capture on Falling Edge
-; 0000 0074 // Timer1 Overflow Interrupt: Off
-; 0000 0075 // Input Capture Interrupt: Off
-; 0000 0076 // Compare A Match Interrupt: Off
-; 0000 0077 // Compare B Match Interrupt: Off
-; 0000 0078 TCCR1A=0x00;
+; 0000 004D 
+; 0000 004E         // Timer/Counter 1 initialization
+; 0000 004F         // Clock source: System Clock
+; 0000 0050         // Clock value: Timer1 Stopped
+; 0000 0051         // Mode: Normal top=FFFFh
+; 0000 0052         // OC1A output: Discon.
+; 0000 0053         // OC1B output: Discon.
+; 0000 0054         // Noise Canceler: Off
+; 0000 0055         // Input Capture on Falling Edge
+; 0000 0056         // Timer1 Overflow Interrupt: Off
+; 0000 0057         // Input Capture Interrupt: Off
+; 0000 0058         // Compare A Match Interrupt: Off
+; 0000 0059         // Compare B Match Interrupt: Off
+; 0000 005A         TCCR1A=0x00;
 	OUT  0x2F,R30
-; 0000 0079 TCCR1B=0x00;
+; 0000 005B         TCCR1B=0x00;
 	OUT  0x2E,R30
-; 0000 007A TCNT1H=0x00;
+; 0000 005C         TCNT1H=0x00;
 	OUT  0x2D,R30
-; 0000 007B TCNT1L=0x00;
+; 0000 005D         TCNT1L=0x00;
 	OUT  0x2C,R30
-; 0000 007C ICR1H=0x00;
+; 0000 005E         ICR1H=0x00;
 	OUT  0x27,R30
-; 0000 007D ICR1L=0x00;
+; 0000 005F         ICR1L=0x00;
 	OUT  0x26,R30
-; 0000 007E OCR1AH=0x00;
+; 0000 0060         OCR1AH=0x00;
 	OUT  0x2B,R30
-; 0000 007F OCR1AL=0x00;
+; 0000 0061         OCR1AL=0x00;
 	OUT  0x2A,R30
-; 0000 0080 OCR1BH=0x00;
+; 0000 0062         OCR1BH=0x00;
 	OUT  0x29,R30
-; 0000 0081 OCR1BL=0x00;
+; 0000 0063         OCR1BL=0x00;
 	OUT  0x28,R30
-; 0000 0082 
-; 0000 0083 // Timer/Counter 2 initialization
-; 0000 0084 // Clock source: System Clock
-; 0000 0085 // Clock value: 15.625 kHz
-; 0000 0086 // Mode: Normal top=FFh
-; 0000 0087 // OC2 output: Toggle on compare match
-; 0000 0088 ASSR=0x00;
+; 0000 0064 
+; 0000 0065         // Timer/Counter 2 initialization
+; 0000 0066         // Clock source: System Clock
+; 0000 0067         // Clock value: OFF
+; 0000 0068         // Mode: Normal top=FFh
+; 0000 0069         // OC2 output: Toggle on compare match
+; 0000 006A         ASSR=0x00;
 	OUT  0x22,R30
-; 0000 0089 TCCR2=0x17;
-	LDI  R30,LOW(23)
+; 0000 006B         TCCR2=0x10;
+	LDI  R30,LOW(16)
 	OUT  0x25,R30
-; 0000 008A TCNT2=0x00;
+; 0000 006C         TCNT2=0x00;
 	LDI  R30,LOW(0)
 	OUT  0x24,R30
-; 0000 008B OCR2=0x03;
+; 0000 006D         OCR2=0x03;
 	LDI  R30,LOW(3)
 	OUT  0x23,R30
-; 0000 008C 
-; 0000 008D // External Interrupt(s) initialization
-; 0000 008E // INT0: Off
-; 0000 008F // INT1: Off
-; 0000 0090 // INT2: Off
-; 0000 0091 MCUCR=0x00;
+; 0000 006E 
+; 0000 006F         // External Interrupt(s) initialization
+; 0000 0070         // INT0: Off
+; 0000 0071         // INT1: Off
+; 0000 0072         // INT2: Off
+; 0000 0073         MCUCR=0x00;
 	LDI  R30,LOW(0)
 	OUT  0x35,R30
-; 0000 0092 MCUCSR=0x00;
+; 0000 0074         MCUCSR=0x00;
 	OUT  0x34,R30
-; 0000 0093 
-; 0000 0094 // Timer(s)/Counter(s) Interrupt(s) initialization
-; 0000 0095 TIMSK=0x00;
+; 0000 0075 
+; 0000 0076         // Timer(s)/Counter(s) Interrupt(s) initialization
+; 0000 0077         TIMSK=0x00;
 	OUT  0x39,R30
-; 0000 0096 
-; 0000 0097 // USART initialization
-; 0000 0098 // Communication Parameters: 8 Data, 1 Stop, No Parity
-; 0000 0099 // USART Receiver: On
-; 0000 009A // USART Transmitter: On
-; 0000 009B // USART Mode: Asynchronous
-; 0000 009C // USART Baud Rate: 9600
-; 0000 009D UCSRA=0x00;
+; 0000 0078 
+; 0000 0079         // USART initialization
+; 0000 007A         // Communication Parameters: 8 Data, 1 Stop, No Parity
+; 0000 007B         // USART Receiver: On
+; 0000 007C         // USART Transmitter: On
+; 0000 007D         // USART Mode: Asynchronous
+; 0000 007E         // USART Baud Rate: 9600
+; 0000 007F         UCSRA=0x00;
 	OUT  0xB,R30
-; 0000 009E UCSRB=0x18;
+; 0000 0080         UCSRB=0x18;
 	LDI  R30,LOW(24)
 	OUT  0xA,R30
-; 0000 009F UCSRC=0x86;
+; 0000 0081         UCSRC=0x86;
 	LDI  R30,LOW(134)
 	OUT  0x20,R30
-; 0000 00A0 UBRRH=0x00;
+; 0000 0082         UBRRH=0x00;
 	LDI  R30,LOW(0)
 	OUT  0x20,R30
-; 0000 00A1 UBRRL=0x67;
+; 0000 0083         UBRRL=0x67;
 	LDI  R30,LOW(103)
 	OUT  0x9,R30
-; 0000 00A2 
-; 0000 00A3 // Analog Comparator initialization
-; 0000 00A4 // Analog Comparator: Off
-; 0000 00A5 // Analog Comparator Input Capture by Timer/Counter 1: Off
-; 0000 00A6 ACSR=0x80;
+; 0000 0084 
+; 0000 0085         // Analog Comparator initialization
+; 0000 0086         // Analog Comparator: Off
+; 0000 0087         // Analog Comparator Input Capture by Timer/Counter 1: Off
+; 0000 0088         ACSR=0x80;
 	LDI  R30,LOW(128)
 	OUT  0x8,R30
-; 0000 00A7 SFIOR=0x00;
+; 0000 0089         SFIOR=0x00;
 	LDI  R30,LOW(0)
 	OUT  0x30,R30
-; 0000 00A8 
-; 0000 00A9 // ADC initialization
-; 0000 00AA // ADC Clock frequency: 1000.000 kHz
-; 0000 00AB // ADC Voltage Reference: AREF pin
-; 0000 00AC ADMUX=ADC_VREF_TYPE & 0xff;
+; 0000 008A 
+; 0000 008B         // ADC initialization
+; 0000 008C         // ADC Clock frequency: 1000.000 kHz
+; 0000 008D         // ADC Voltage Reference: AREF pin
+; 0000 008E         ADMUX=ADC_VREF_TYPE & 0xff;
 	OUT  0x7,R30
-; 0000 00AD ADCSRA=0x84;
+; 0000 008F         ADCSRA=0x84;
 	LDI  R30,LOW(132)
 	OUT  0x6,R30
-; 0000 00AE 
-; 0000 00AF // I2C Bus initialization
-; 0000 00B0 i2c_init();
+; 0000 0090 
+; 0000 0091         // I2C Bus initialization
+; 0000 0092         i2c_init();
 	CALL _i2c_init
-; 0000 00B1 
-; 0000 00B2 // DS1621 Thermometer/Thermostat initialization
-; 0000 00B3 // tlow: 50°C
-; 0000 00B4 // thigh: 55°C
-; 0000 00B5 // Tout polarity: 0
-; 0000 00B6 ds1621_init(0,50,55,0);
-	LDI  R30,LOW(0)
-	ST   -Y,R30
-	LDI  R30,LOW(50)
-	ST   -Y,R30
-	LDI  R30,LOW(55)
-	ST   -Y,R30
-	LDI  R30,LOW(0)
-	ST   -Y,R30
-	RCALL _ds1621_init
-; 0000 00B7 
-; 0000 00B8 // DS1307 Real Time Clock initialization
-; 0000 00B9 // Square wave output on pin SQW/OUT: Off
-; 0000 00BA // SQW/OUT pin state: 0
-; 0000 00BB rtc_init(0,0,0);
+; 0000 0093 
+; 0000 0094         // DS1307 Real Time Clock initialization
+; 0000 0095         // Square wave output on pin SQW/OUT: Off
+; 0000 0096         // SQW/OUT pin state: 0
+; 0000 0097         rtc_init(0,0,0);
 	LDI  R30,LOW(0)
 	ST   -Y,R30
 	ST   -Y,R30
 	ST   -Y,R30
-	RCALL _rtc_init
-; 0000 00BC 
-; 0000 00BD // LCD module initialization
-; 0000 00BE lcd_init(16);
+	CALL _rtc_init
+; 0000 0098 
+; 0000 0099         // LCD module initialization
+; 0000 009A         lcd_init(16);
 	LDI  R30,LOW(16)
 	ST   -Y,R30
 	CALL _lcd_init
-; 0000 00BF 
-; 0000 00C0 while (1)
+; 0000 009B 
+; 0000 009C         while (1)
+_0x3:
+; 0000 009D               {
+; 0000 009E               // Place your code here
+; 0000 009F 
+; 0000 00A0               };
+	RJMP _0x3
+; 0000 00A1 }
 _0x6:
-; 0000 00C1       {
-; 0000 00C2       // Place your code here
-; 0000 00C3 
-; 0000 00C4       };
 	RJMP _0x6
-; 0000 00C5 }
-_0x9:
-	RJMP _0x9
+;
+;
+;#include "adc.h"
+	#ifndef __SLEEP_DEFINED__
+	#define __SLEEP_DEFINED__
+	.EQU __se_bit=0x80
+	.EQU __sm_mask=0x70
+	.EQU __sm_powerdown=0x20
+	.EQU __sm_powersave=0x30
+	.EQU __sm_standby=0x60
+	.EQU __sm_ext_standby=0x70
+	.EQU __sm_adc_noise_red=0x10
+	.SET power_ctrl_reg=mcucr
+	#endif
+;
+;// Read the AD conversion result
+;unsigned int read_adc(unsigned char adc_input)
+; 0001 0007 {
 
 	.CSEG
-_ds1621_get_status:
-	ST   -Y,R17
-	ST   -Y,R16
-	LDD  R30,Y+2
-	LSL  R30
-	ORI  R30,LOW(0x90)
-	MOV  R17,R30
-	CALL _i2c_start
-	ST   -Y,R17
-	CALL SUBOPT_0x0
-	CALL _i2c_start
-	SUBI R17,-LOW(1)
-	ST   -Y,R17
-	CALL _i2c_write
-	LDI  R30,LOW(0)
-	ST   -Y,R30
-	CALL _i2c_read
-	MOV  R16,R30
-	CALL _i2c_stop
-	MOV  R30,R16
-	LDD  R17,Y+1
-	LDD  R16,Y+0
-	RJMP _0x20E0002
-_ds1621_set_status:
-	CALL _i2c_start
-	LDD  R30,Y+1
-	LSL  R30
-	ORI  R30,LOW(0x90)
-	ST   -Y,R30
-	CALL SUBOPT_0x0
-	LD   R30,Y
-	CALL SUBOPT_0x1
-	ADIW R28,2
-	RET
-_ds1621_set_temp:
-	CALL _i2c_start
-	LDD  R30,Y+2
-	LSL  R30
-	ORI  R30,LOW(0x90)
-	ST   -Y,R30
-	CALL _i2c_write
-	LDD  R30,Y+1
-	ST   -Y,R30
-	CALL _i2c_write
-	LD   R30,Y
-	ST   -Y,R30
-	CALL _i2c_write
-	LDI  R30,LOW(0)
-	CALL SUBOPT_0x1
-_0x2000003:
-	LDD  R30,Y+2
-	ST   -Y,R30
-	RCALL _ds1621_get_status
-	ANDI R30,LOW(0x10)
-	BRNE _0x2000003
-	RJMP _0x20E0002
-_ds1621_start:
-	CALL _i2c_start
-	LD   R30,Y
-	LSL  R30
-	ORI  R30,LOW(0x90)
-	ST   -Y,R30
-	CALL _i2c_write
-	LDI  R30,LOW(238)
-	CALL SUBOPT_0x1
-	JMP  _0x20E0001
-_ds1621_init:
-	LDD  R30,Y+3
-	ST   -Y,R30
-	LDD  R30,Y+1
-	LSL  R30
-	SUBI R30,-LOW(8)
-	ST   -Y,R30
-	RCALL _ds1621_set_status
-	LDD  R30,Y+3
-	ST   -Y,R30
-	LDI  R30,LOW(162)
-	ST   -Y,R30
-	LDD  R30,Y+4
-	ST   -Y,R30
-	RCALL _ds1621_set_temp
-	LDD  R30,Y+3
-	ST   -Y,R30
-	LDI  R30,LOW(161)
-	ST   -Y,R30
-	LDD  R30,Y+3
-	ST   -Y,R30
-	RCALL _ds1621_set_temp
-	LDD  R30,Y+3
-	ST   -Y,R30
-	RCALL _ds1621_start
-	ADIW R28,4
-	RET
+; 0001 0008 ADMUX=adc_input | (ADC_VREF_TYPE & 0xff);
+;	adc_input -> Y+0
+; 0001 0009 // Delay needed for the stabilization of the ADC input voltage
+; 0001 000A delay_us(10);
+; 0001 000B // Start the AD conversion
+; 0001 000C ADCSRA|=0x40;
+; 0001 000D // Wait for the AD conversion to complete
+; 0001 000E while ((ADCSRA & 0x10)==0);
+; 0001 000F ADCSRA|=0x10;
+; 0001 0010 return ADCW;
+; 0001 0011 }
+;
+;
+;#include "ds_1307.h"
+	#ifndef __SLEEP_DEFINED__
+	#define __SLEEP_DEFINED__
+	.EQU __se_bit=0x80
+	.EQU __sm_mask=0x70
+	.EQU __sm_powerdown=0x20
+	.EQU __sm_powersave=0x30
+	.EQU __sm_standby=0x60
+	.EQU __sm_ext_standby=0x70
+	.EQU __sm_adc_noise_red=0x10
+	.SET power_ctrl_reg=mcucr
+	#endif
+;
+;unsigned char ds1307_read (unsigned char address)  {
+; 0002 0005 unsigned char ds1307_read (unsigned char address)  {
 
 	.CSEG
-_rtc_init:
-	LDD  R30,Y+2
-	ANDI R30,LOW(0x3)
-	STD  Y+2,R30
-	LDD  R30,Y+1
-	CPI  R30,0
-	BREQ _0x2020003
-	LDD  R30,Y+2
-	ORI  R30,0x10
-	STD  Y+2,R30
-_0x2020003:
-	LD   R30,Y
-	CPI  R30,0
-	BREQ _0x2020004
-	LDD  R30,Y+2
-	ORI  R30,0x80
-	STD  Y+2,R30
-_0x2020004:
+; 0002 0006         unsigned char data;
+; 0002 0007         i2c_start();
+;	address -> Y+1
+;	data -> R17
+; 0002 0008         i2c_write(I2C_BUS_ADDRESS);
+; 0002 0009         i2c_write(address);
+; 0002 000A         i2c_start();
+; 0002 000B         i2c_write(I2C_BUS_ADDRESS | 1);
+; 0002 000C         data=i2c_read(0);
+; 0002 000D         i2c_stop();
+; 0002 000E         return data;
+; 0002 000F }
+;
+;void ds1307_write (unsigned char address, unsigned char data)  {
+; 0002 0011 void ds1307_write (unsigned char address, unsigned char data)  {
+_ds1307_write:
+; 0002 0012         i2c_start();
+;	address -> Y+1
+;	data -> Y+0
 	CALL _i2c_start
+; 0002 0013         i2c_write(I2C_BUS_ADDRESS);
 	LDI  R30,LOW(208)
 	ST   -Y,R30
 	CALL _i2c_write
-	LDI  R30,LOW(7)
+; 0002 0014         i2c_write(address);
+	LDD  R30,Y+1
 	ST   -Y,R30
 	CALL _i2c_write
-	LDD  R30,Y+2
-	CALL SUBOPT_0x1
-_0x20E0002:
-	ADIW R28,3
+; 0002 0015         i2c_write(data);
+	LD   R30,Y
+	ST   -Y,R30
+	CALL _i2c_write
+; 0002 0016         i2c_stop();
+	CALL _i2c_stop
+; 0002 0017         delay_ms(10);
+	LDI  R30,LOW(10)
+	LDI  R31,HIGH(10)
+	ST   -Y,R31
+	ST   -Y,R30
+	CALL _delay_ms
+; 0002 0018 }
+	ADIW R28,2
 	RET
+;
+;void rtc_init(unsigned char rs,unsigned char sqwe,unsigned char out)    {
+; 0002 001A void rtc_init(unsigned char rs,unsigned char sqwe,unsigned char out)    {
+_rtc_init:
+; 0002 001B 
+; 0002 001C         unsigned char ctrl_reg = (unsigned char) ( out<<7 | sqwe<<4 | rs );
+; 0002 001D         ds1307_write(0x07,ctrl_reg);
+	ST   -Y,R17
+;	rs -> Y+3
+;	sqwe -> Y+2
+;	out -> Y+1
+;	ctrl_reg -> R17
+	LDD  R30,Y+1
+	ROR  R30
+	LDI  R30,0
+	ROR  R30
+	MOV  R26,R30
+	LDD  R30,Y+2
+	SWAP R30
+	ANDI R30,0xF0
+	OR   R30,R26
+	LDD  R26,Y+3
+	OR   R30,R26
+	MOV  R17,R30
+	LDI  R30,LOW(7)
+	ST   -Y,R30
+	ST   -Y,R17
+	RCALL _ds1307_write
+; 0002 001E 
+; 0002 001F }
+	LDD  R17,Y+0
+	ADIW R28,4
+	RET
+;
+;
+;#include "buzzer.h"
+	#ifndef __SLEEP_DEFINED__
+	#define __SLEEP_DEFINED__
+	.EQU __se_bit=0x80
+	.EQU __sm_mask=0x70
+	.EQU __sm_powerdown=0x20
+	.EQU __sm_powersave=0x30
+	.EQU __sm_standby=0x60
+	.EQU __sm_ext_standby=0x70
+	.EQU __sm_adc_noise_red=0x10
+	.SET power_ctrl_reg=mcucr
+	#endif
+;
+;void buzzer_on()        {
+; 0003 0005 void buzzer_on()        {
+
+	.CSEG
+; 0003 0006         // Timer/Counter 2 initialization
+; 0003 0007         // Clock source: System Clock
+; 0003 0008         // Clock value: 15.625 kHz
+; 0003 0009         // Mode: Normal top=FFh
+; 0003 000A         // OC2 output: Toggle on compare match
+; 0003 000B         ASSR=0x00;
+; 0003 000C         TCCR2=0x17;
+; 0003 000D         TCNT2=0x00;
+; 0003 000E         OCR2=0x03;
+; 0003 000F }
+;
+;void buzzer_off()       {
+; 0003 0011 void buzzer_off()       {
+; 0003 0012         // Timer/Counter 2 initialization
+; 0003 0013         // Clock source: System Clock
+; 0003 0014         // Clock value: 15.625 kHz
+; 0003 0015         // Mode: Normal top=FFh
+; 0003 0016         // OC2 output: Toggle on compare match
+; 0003 0017         ASSR=0x00;
+; 0003 0018         TCCR2=0x10;
+; 0003 0019         TCNT2=0x00;
+; 0003 001A         OCR2=0x03;
+; 0003 001B }
+;
+;
+;#include "rc5.h"
+	#ifndef __SLEEP_DEFINED__
+	#define __SLEEP_DEFINED__
+	.EQU __se_bit=0x80
+	.EQU __sm_mask=0x70
+	.EQU __sm_powerdown=0x20
+	.EQU __sm_powersave=0x30
+	.EQU __sm_standby=0x60
+	.EQU __sm_ext_standby=0x70
+	.EQU __sm_adc_noise_red=0x10
+	.SET power_ctrl_reg=mcucr
+	#endif
+;
+;unsigned int get_rc5()  {
+; 0004 0005 unsigned int get_rc5()  {
+
+	.CSEG
+; 0004 0006 
+; 0004 0007         unsigned char RC5[14];
+; 0004 0008         unsigned int rc5_code;
+; 0004 0009 
+; 0004 000A         #if _MCU_CLOCK_FREQUENCY_ 16000000
+; 0004 000B                 // Timer/Counter 0 initialization
+; 0004 000C                 // Clock source: System Clock
+; 0004 000D                 // Clock value: 15.625 kHz
+; 0004 000E                 // Mode: Normal top=FFh
+; 0004 000F                 // OC0 output: Disconnected
+; 0004 0010                 TCCR0=0x05;
+;	RC5 -> Y+2
+;	rc5_code -> R16,R17
+; 0004 0011                 TCNT0=0x00;
+; 0004 0012                 OCR0=0x00;
+; 0004 0013 
+; 0004 0014                 #define count1 21
+; 0004 0015                 #define count2 28
+; 0004 0016         #elif _MCU_CLOCK_FREQUENCY_ 8000000
+; 0004 0017                 // Timer/Counter 0 initialization
+; 0004 0018                 // Clock source: System Clock
+; 0004 0019                 // Clock value: 31.250 kHz
+; 0004 001A                 TCCR0=0x04;
+; 0004 001B                 TCNT0=0x00;
+; 0004 001C 
+; 0004 001D                 #define count1 42
+; 0004 001E                 #define count2 55
+; 0004 001F         #endif
+; 0004 0020 
+; 0004 0021         /*
+; 0004 0022         |bit1 |bit2 |bit3 |bit4 |bit5 |bit6 |bit7 |bit8 |bit9 |bit10|bit11|bit12|bit13|bit14|
+; 0004 0023         |-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+; 0004 0024       __    __    _____    __    __       _____       __    __    _____       _____       __
+; 0004 0025         |  |  |  |     |  |  |  |  |     |     |     |  |  |  |  |     |     |     |     |  |
+; 0004 0026         |__|  |__|     |__|  |__|  |_____|     |_____|  |__|  |__|     |_____|     |_____|  |
+; 0004 0027         |--1--|--1--|--0--|--0--|--0--|--1--|--0--|--1--|--1--|--1--|--0--|--1--|--0--|--1--|
+; 0004 0028         |<-Startbit 1 & 2>|<TGL>|<----------ADDRESS---------->|<----------Command---------->|
+; 0004 0029 
+; 0004 002A         Algo:
+; 0004 002B         1. Start counter at first falling edge
+; 0004 002C         2. After (1.5 x 889) uSec Capture bit1 and reset counter
+; 0004 002D         3. Capture bit 2-14 after 2x889 uSec interval each
+; 0004 002E         3. After capturing all 14 bit make sure both start bits are 1 else discard
+; 0004 002F 
+; 0004 0030         Note: Here for Counter freq 31.25KHz (T=32uSec)1.5x889 uSec => count value 42
+; 0004 0031                                                          2x889 uSec => count Value 55
+; 0004 0032         For more details Read:
+; 0004 0033                 http://ashishd.wordpress.com/2009/02/15/infrared-remote-control-rc-5/
+; 0004 0034         */
+; 0004 0035 
+; 0004 0036         //0
+; 0004 0037 
+; 0004 0038         // Wait for Falling edge
+; 0004 0039         while(IR_ip);
+; 0004 003A 
+; 0004 003B         TCNT0=0x0;
+; 0004 003C         while(~IR_ip);
+; 0004 003D         while(TCNT0<21);
+; 0004 003E         //printf("%u",TCNT0);
+; 0004 003F         TCNT0=0;
+; 0004 0040         RC5[0]= IR_ip;
+; 0004 0041 
+; 0004 0042         while(TCNT0<28);
+; 0004 0043         TCNT0=0;
+; 0004 0044         RC5[1]= IR_ip;
+; 0004 0045 
+; 0004 0046         while(TCNT0<28);
+; 0004 0047         TCNT0=0;
+; 0004 0048         RC5[2]= IR_ip;
+; 0004 0049 
+; 0004 004A         while(TCNT0<28);
+; 0004 004B         TCNT0=0;
+; 0004 004C         RC5[3]= IR_ip;
+; 0004 004D 
+; 0004 004E         while(TCNT0<28);
+; 0004 004F         TCNT0=0;
+; 0004 0050         RC5[4]= IR_ip;
+; 0004 0051 
+; 0004 0052         while(TCNT0<28);
+; 0004 0053         TCNT0=0;
+; 0004 0054         RC5[5]= IR_ip;
+; 0004 0055 
+; 0004 0056         while(TCNT0<28);
+; 0004 0057         TCNT0=0;
+; 0004 0058         RC5[6]= IR_ip;
+; 0004 0059 
+; 0004 005A         while(TCNT0<28);
+; 0004 005B         TCNT0=0;
+; 0004 005C         RC5[7]= IR_ip;
+; 0004 005D 
+; 0004 005E         while(TCNT0<28);
+; 0004 005F         TCNT0=0;
+; 0004 0060         RC5[8]= IR_ip;
+; 0004 0061 
+; 0004 0062         while(TCNT0<28);
+; 0004 0063         TCNT0=0;
+; 0004 0064         RC5[9]= IR_ip;
+; 0004 0065 
+; 0004 0066         while(TCNT0<28);
+; 0004 0067         TCNT0=0;
+; 0004 0068         RC5[10]= IR_ip;
+; 0004 0069 
+; 0004 006A         while(TCNT0<28);
+; 0004 006B         TCNT0=0;
+; 0004 006C         RC5[11]= IR_ip;
+; 0004 006D 
+; 0004 006E         while(TCNT0<28);
+; 0004 006F         TCNT0=0;
+; 0004 0070         RC5[12]= IR_ip;
+; 0004 0071 
+; 0004 0072         while(TCNT0<28);
+; 0004 0073         TCNT0=0;
+; 0004 0074         RC5[13]= IR_ip;
+; 0004 0075 
+; 0004 0076         rc5_code = (unsigned int) (RC5[13] | RC5[12]<<1 | RC5[11]<<2 \
+; 0004 0077                         | RC5[10]<<3 | RC5[9]<<4 | RC5[8]<<5 | RC5[7]<<6 \
+; 0004 0078                         | RC5[6]<<7 | RC5[5]<<8 | RC5[4]<<9 | RC5[3]<<10 \
+; 0004 0079                         | RC5[2]<<11 | RC5[1]<<12 | RC5[0]<<13);
+; 0004 007A         return rc5_code;
+; 0004 007B }
     .equ __lcd_direction=__lcd_port-1
     .equ __lcd_pin=__lcd_port-2
     .equ __lcd_rs=0
@@ -1599,7 +1737,7 @@ _0x20E0002:
 	.DSEG
 
 	.CSEG
-__lcd_delay_G102:
+__lcd_delay_G100:
     ldi   r31,15
 __lcd_delay0:
     dec   r31
@@ -1612,26 +1750,26 @@ __lcd_ready:
     sbi   __lcd_port,__lcd_rd     ;RD=1
     cbi   __lcd_port,__lcd_rs     ;RS=0
 __lcd_busy:
-	RCALL __lcd_delay_G102
+	RCALL __lcd_delay_G100
     sbi   __lcd_port,__lcd_enable ;EN=1
-	RCALL __lcd_delay_G102
+	RCALL __lcd_delay_G100
     in    r26,__lcd_pin
     cbi   __lcd_port,__lcd_enable ;EN=0
-	RCALL __lcd_delay_G102
+	RCALL __lcd_delay_G100
     sbi   __lcd_port,__lcd_enable ;EN=1
-	RCALL __lcd_delay_G102
+	RCALL __lcd_delay_G100
     cbi   __lcd_port,__lcd_enable ;EN=0
     sbrc  r26,__lcd_busy_flag
     rjmp  __lcd_busy
 	RET
-__lcd_write_nibble_G102:
+__lcd_write_nibble_G100:
     andi  r26,0xf0
     or    r26,r27
     out   __lcd_port,r26          ;write
     sbi   __lcd_port,__lcd_enable ;EN=1
-	CALL __lcd_delay_G102
+	CALL __lcd_delay_G100
     cbi   __lcd_port,__lcd_enable ;EN=0
-	CALL __lcd_delay_G102
+	CALL __lcd_delay_G100
 	RET
 __lcd_write_data:
     cbi  __lcd_port,__lcd_rd 	  ;RD=0
@@ -1641,25 +1779,25 @@ __lcd_write_data:
     in    r27,__lcd_port
     andi  r27,0xf
     ld    r26,y
-	RCALL __lcd_write_nibble_G102
+	RCALL __lcd_write_nibble_G100
     ld    r26,y
     swap  r26
-	RCALL __lcd_write_nibble_G102
+	RCALL __lcd_write_nibble_G100
     sbi   __lcd_port,__lcd_rd     ;RD=1
-	JMP  _0x20E0001
-__lcd_read_nibble_G102:
+	JMP  _0x2080001
+__lcd_read_nibble_G100:
     sbi   __lcd_port,__lcd_enable ;EN=1
-	CALL __lcd_delay_G102
+	CALL __lcd_delay_G100
     in    r30,__lcd_pin           ;read
     cbi   __lcd_port,__lcd_enable ;EN=0
-	CALL __lcd_delay_G102
+	CALL __lcd_delay_G100
     andi  r30,0xf0
 	RET
-_lcd_read_byte0_G102:
-	CALL __lcd_delay_G102
-	RCALL __lcd_read_nibble_G102
+_lcd_read_byte0_G100:
+	CALL __lcd_delay_G100
+	RCALL __lcd_read_nibble_G100
     mov   r26,r30
-	RCALL __lcd_read_nibble_G102
+	RCALL __lcd_read_nibble_G100
     cbi   __lcd_port,__lcd_rd     ;RD=0
     swap  r30
     or    r30,r26
@@ -1681,14 +1819,14 @@ _lcd_clear:
 	MOV  R4,R30
 	MOV  R5,R30
 	RET
-__long_delay_G102:
+__long_delay_G100:
     clr   r26
     clr   r27
 __long_delay0:
     sbiw  r26,1         ;2 cycles
     brne  __long_delay0 ;2 cycles
 	RET
-__lcd_init_write_G102:
+__lcd_init_write_G100:
     cbi  __lcd_port,__lcd_rd 	  ;RD=0
     in    r26,__lcd_direction
     ori   r26,0xf7                ;set as output
@@ -1696,50 +1834,50 @@ __lcd_init_write_G102:
     in    r27,__lcd_port
     andi  r27,0xf
     ld    r26,y
-	CALL __lcd_write_nibble_G102
+	CALL __lcd_write_nibble_G100
     sbi   __lcd_port,__lcd_rd     ;RD=1
-	RJMP _0x20E0001
+	RJMP _0x2080001
 _lcd_init:
     cbi   __lcd_port,__lcd_enable ;EN=0
     cbi   __lcd_port,__lcd_rs     ;RS=0
 	LDD  R7,Y+0
 	LD   R30,Y
 	SUBI R30,-LOW(128)
-	__PUTB1MN __base_y_G102,2
+	__PUTB1MN __base_y_G100,2
 	LD   R30,Y
 	SUBI R30,-LOW(192)
-	__PUTB1MN __base_y_G102,3
-	CALL SUBOPT_0x2
-	CALL SUBOPT_0x2
-	CALL SUBOPT_0x2
-	RCALL __long_delay_G102
+	__PUTB1MN __base_y_G100,3
+	CALL SUBOPT_0x0
+	CALL SUBOPT_0x0
+	CALL SUBOPT_0x0
+	RCALL __long_delay_G100
 	LDI  R30,LOW(32)
 	ST   -Y,R30
-	RCALL __lcd_init_write_G102
-	RCALL __long_delay_G102
+	RCALL __lcd_init_write_G100
+	RCALL __long_delay_G100
 	LDI  R30,LOW(40)
-	CALL SUBOPT_0x3
+	CALL SUBOPT_0x1
 	LDI  R30,LOW(4)
-	CALL SUBOPT_0x3
+	CALL SUBOPT_0x1
 	LDI  R30,LOW(133)
-	CALL SUBOPT_0x3
+	CALL SUBOPT_0x1
     in    r26,__lcd_direction
     andi  r26,0xf                 ;set as input
     out   __lcd_direction,r26
     sbi   __lcd_port,__lcd_rd     ;RD=1
-	CALL _lcd_read_byte0_G102
+	CALL _lcd_read_byte0_G100
 	CPI  R30,LOW(0x5)
-	BREQ _0x204000B
+	BREQ _0x200000B
 	LDI  R30,LOW(0)
-	RJMP _0x20E0001
-_0x204000B:
+	RJMP _0x2080001
+_0x200000B:
 	CALL __lcd_ready
 	LDI  R30,LOW(6)
 	ST   -Y,R30
 	CALL __lcd_write_data
 	CALL _lcd_clear
 	LDI  R30,LOW(1)
-_0x20E0001:
+_0x2080001:
 	ADIW R28,1
 	RET
 	#ifndef __SLEEP_DEFINED__
@@ -1760,38 +1898,23 @@ _0x20E0001:
 
 	.CSEG
 
-	.CSEG
-
 	.DSEG
-__base_y_G102:
+__base_y_G100:
 	.BYTE 0x4
 
 	.CSEG
-;OPTIMIZER ADDED SUBROUTINE, CALLED 2 TIMES, CODE SIZE REDUCTION:1 WORDS
-SUBOPT_0x0:
-	CALL _i2c_write
-	LDI  R30,LOW(172)
-	ST   -Y,R30
-	JMP  _i2c_write
-
-;OPTIMIZER ADDED SUBROUTINE, CALLED 4 TIMES, CODE SIZE REDUCTION:6 WORDS
-SUBOPT_0x1:
-	ST   -Y,R30
-	CALL _i2c_write
-	JMP  _i2c_stop
-
 ;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:5 WORDS
-SUBOPT_0x2:
-	CALL __long_delay_G102
+SUBOPT_0x0:
+	CALL __long_delay_G100
 	LDI  R30,LOW(48)
 	ST   -Y,R30
-	JMP  __lcd_init_write_G102
+	JMP  __lcd_init_write_G100
 
 ;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:3 WORDS
-SUBOPT_0x3:
+SUBOPT_0x1:
 	ST   -Y,R30
 	CALL __lcd_write_data
-	JMP  __long_delay_G102
+	JMP  __long_delay_G100
 
 
 	.CSEG
@@ -1895,6 +2018,19 @@ __i2c_write3:
 	sbic __i2c_pin,__sda_bit
 	clr  r30
 	sbi  __i2c_dir,__scl_bit
+	ret
+
+_delay_ms:
+	ld   r30,y+
+	ld   r31,y+
+	adiw r30,0
+	breq __delay_ms1
+__delay_ms0:
+	__DELAY_USW 0xFA0
+	wdr
+	sbiw r30,1
+	brne __delay_ms0
+__delay_ms1:
 	ret
 
 ;END OF CODE MARKER
