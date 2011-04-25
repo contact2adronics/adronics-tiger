@@ -23,47 +23,16 @@ Data Stack size         : 512
 *****************************************************/
 
 #include <mega32.h>
-
 #include <delay.h>
-
-// I2C Bus functions
-#asm
-   .equ __i2c_port=0x15 ;PORTC
-   .equ __sda_bit=1
-   .equ __scl_bit=0
-#endasm
 #include <i2c.h>
-
-// DS1621 Thermometer/Thermostat functions
-#include <ds1621.h>
-
-// DS1307 Real Time Clock functions
-#include <ds1307.h>
-
-// Alphanumeric LCD Module functions
-#asm
-   .equ __lcd_port=0x1B ;PORTA
-#endasm
 #include <lcd.h>
+#include <ds_1307.h>
 
 // Standard Input/Output functions
 #include <stdio.h>
+#include "TiGERv10.h"
 
-#define ADC_VREF_TYPE 0x00
-
-// Read the AD conversion result
-unsigned int read_adc(unsigned char adc_input)
-{
-ADMUX=adc_input | (ADC_VREF_TYPE & 0xff);
-// Delay needed for the stabilization of the ADC input voltage
-delay_us(10);
-// Start the AD conversion
-ADCSRA|=0x40;
-// Wait for the AD conversion to complete
-while ((ADCSRA & 0x10)==0);
-ADCSRA|=0x10;
-return ADCW;
-}
+#include <adc.h>
 
 // Declare your global variables here
 
@@ -174,12 +143,6 @@ ADCSRA=0x84;
 
 // I2C Bus initialization
 i2c_init();
-
-// DS1621 Thermometer/Thermostat initialization
-// tlow: 50°C
-// thigh: 55°C
-// Tout polarity: 0
-ds1621_init(0,50,55,0);
 
 // DS1307 Real Time Clock initialization
 // Square wave output on pin SQW/OUT: Off
