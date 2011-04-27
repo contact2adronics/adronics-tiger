@@ -1,0 +1,11 @@
+VERSION:3 SOURCE_TIMESTAMP:3E9BA831
+NODE:I LEVEL:0 LINE:25 "C:\cvavr\inc\mega32.h"
+NODE:I LEVEL:0 LINE:26 "Z:\Electronics\TiGER\adronics-tiger\inc\adc.h"
+NODE:I LEVEL:0 LINE:27 "C:\cvavr\inc\delay.h"
+NODE:I LEVEL:0 LINE:28 "C:\cvavr\inc\math.h"
+NODE:I LEVEL:0 LINE:29 "Z:\Electronics\TiGER\adronics-tiger\inc\TiGERv10.h"
+NODE:M LEVEL:0 LINE:34 "ADC_VREF_TYPE"
+NODE:M LEVEL:0 LINE:38 "MAX_REF"
+NODE:I LEVEL:0 LINE:40 "C:\cvavr\inc\lcd.h"
+NODE:I LEVEL:0 LINE:43 "C:\cvavr\inc\stdio.h"
+NODE:F LEVEL:0 LINE:47 "main(void)"
